@@ -1,4 +1,8 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Chinook.Services.Interfaces;
+@inject IUserService _userService
+@inject IPlaylistService _playlistService
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Chinook</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -7,28 +11,39 @@
     </div>
 </div>
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+<div class="@navMenuCssClass" @onclick="ToggleNavMenu">
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="oi oi-home" aria-hidden="true"></span>Home
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-@* 
-            <NavLink class="nav-link" href="playlist/playlistnumber">
-                <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>My favorite tracks
-            </NavLink>
-*@
-</div>
-
+        @if (userPlaylists != null)
+        {
+            <div class="nav-item px-3">
+                <div class="nav-link"><i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>My Playlists</div>
+                @foreach (var UserPlaylist in userPlaylists)
+                {
+                    <a class="nav-link" href="playlist/@UserPlaylist.PlaylistId">@UserPlaylist.Name</a>
+                }
+            </div>
+        }
     </nav>
 </div>
 
 @code {
     private bool collapseNavMenu = true;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private List<Models.Playlist> userPlaylists;
+
+    private string? navMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+        var currentUserId = await _userService.GetUserId();
+        userPlaylists = await _playlistService.GetPlaylistsByUserId(currentUserId);
+    }
 
     private void ToggleNavMenu()
     {
